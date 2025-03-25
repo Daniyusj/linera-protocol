@@ -213,6 +213,37 @@ impl TryFrom<&[u8]> for AccountSignature {
     }
 }
 
+/// A trait for signing keys.
+// #[cfg_attr(not(web), async_trait)]
+#[cfg_attr(web, async_trait(?Send))]
+pub trait SigningKey {
+    /// Signs the given value and returns the signature.
+    fn sign<'a, 'b, A: BcsSignable<'b>>(&'a self, value: &A) -> AccountSignature;
+
+    /// Returns the public key of this signing key.
+    fn public(&self) -> AccountPublicKey;
+}
+
+impl SigningKey for AccountSecretKey {
+    fn sign<'a, 'b, A: BcsSignable<'b>>(&'a self, value: &A) -> AccountSignature {
+        AccountSecretKey::sign(self, value)
+    }
+
+    fn public(&self) -> AccountPublicKey {
+        AccountSecretKey::public(self)
+    }
+}
+
+impl SigningKey for &AccountSecretKey {
+    fn sign<'a, 'b, A: BcsSignable<'b>>(&'a self, value: &A) -> AccountSignature {
+        AccountSecretKey::sign(self, value)
+    }
+
+    fn public(&self) -> AccountPublicKey {
+        AccountSecretKey::public(self)
+    }
+}
+
 /// Error type for cryptographic errors.
 #[derive(Error, Debug)]
 #[allow(missing_docs)]
